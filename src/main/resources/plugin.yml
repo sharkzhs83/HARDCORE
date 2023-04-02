@@ -1,0 +1,6 @@
+name: HARDCORE
+version: '${version}'
+main: io.github.sharkzhs83.hardcore.HARDCORE
+api-version: 1.19
+libraries:
+  - org.jetbrains.kotlin:kotlin-stdlib:1.8.10
