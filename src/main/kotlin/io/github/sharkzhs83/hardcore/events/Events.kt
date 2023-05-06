@@ -1,8 +1,8 @@
 package io.github.sharkzhs83.hardcore.events
 
-import io.github.monun.tap.task.Ticker
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
+import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.Material
 import org.bukkit.Sound
@@ -10,7 +10,6 @@ import org.bukkit.entity.*
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockBreakEvent
-import org.bukkit.event.enchantment.EnchantItemEvent
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.event.entity.EntityExplodeEvent
@@ -23,9 +22,6 @@ import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 
 class Events : Listener {
-
-
-
 
     //크리퍼 억까
     @EventHandler
@@ -82,18 +78,47 @@ class Events : Listener {
         }
     }
 
+    //defender 드랍 & 보스
     @EventHandler
     fun onEntityDead(event: EntityDeathEvent) {
-        val defender = ItemStack(Material.EMERALD)
-        val defMeta = defender.itemMeta
+        if(event.entity.type == EntityType.ENDER_DRAGON) {
+            Bukkit.broadcast(Component.text("엔더드래곤을 격파하였습니다!", TextColor.color(181, 76, 250)))
+        }
+        else if(event.entity.type == EntityType.WITHER) {
+            Bukkit.broadcast(Component.text("위더를 격파하였습니다!", TextColor.color(0, 0, 0)))
+        }
+        else if(event.entity.type == EntityType.ELDER_GUARDIAN) {
+            Bukkit.broadcast(Component.text("엘더가디언을 격파하였습니다!", TextColor.color(48, 231, 238)))
+            val item = ItemStack(Material.NETHER_STAR)
+            val meta = item.itemMeta
+            meta.setDisplayName("${ChatColor.BLUE}엘더가디언의 별")
+            item.itemMeta = meta
 
-        defMeta.setDisplayName("${net.md_5.bungee.api.ChatColor.AQUA}크리퍼 저항 에메랄드")
-        defender.itemMeta = defMeta
+            event.drops.add(item)
+        }
+        else if(event.entity.type == EntityType.WARDEN) {
+            Bukkit.broadcast(Component.text("워든을 격파하였습니다!", TextColor.color(12, 12, 131)))
 
-        val range = 1..10
-        val num = range.random()
-        if(num == 1) {
-            event.drops.add(defender)
+            val item = ItemStack(Material.NETHER_STAR)
+            val meta = item.itemMeta
+            meta.setDisplayName("${ChatColor.DARK_BLUE}워든의 별")
+            item.itemMeta = meta
+
+            event.drops.add(item)
+
+        }
+        else {
+            val defender = ItemStack(Material.EMERALD)
+            val defMeta = defender.itemMeta
+
+            defMeta.setDisplayName("${net.md_5.bungee.api.ChatColor.AQUA}크리퍼 저항 에메랄드")
+            defender.itemMeta = defMeta
+
+            val range = 1..50
+            val num = range.random()
+            if(num == 1) {
+                event.drops.add(defender)
+            }
         }
     }
 
@@ -150,7 +175,6 @@ class Events : Listener {
     //스켈레톤 억까
     @EventHandler
     fun onSkeletonShoot(event: EntityShootBowEvent) {
-
         if (event.entityType == EntityType.SKELETON) {
             val entity = event.entity
             val arrow = entity.launchProjectile(Fireball::class.java, entity.location.direction)
@@ -215,7 +239,6 @@ class Events : Listener {
             val entity = event.damager as LivingEntity
 
             player.teleport(player.location.add(0.0, 30.0, 0.0))
-            entity.teleport(entity.location.add(0.0, 30.0, 0.0))
             player.playSound(player.location, Sound.ENTITY_ENDERMAN_TELEPORT, 0.7f, 1.0f)
 
         }
@@ -230,6 +253,7 @@ class Events : Listener {
             val entity = event.damager as LivingEntity
 
             player.world.spawn(entity.location.add(0.0,2.00,0.0), PigZombie::class.java)
+            player.playSound(player.location, Sound.ITEM_GOAT_HORN_SOUND_0, 0.7f, 1.5f)
         }
     }
 
@@ -242,6 +266,7 @@ class Events : Listener {
             val server = player.server
 
             piglin.equipment?.setItemInMainHand(ItemStack(Material.NETHERITE_SWORD))
+            player.playSound(player.location, Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.2f)
         }
     }
 
@@ -250,9 +275,31 @@ class Events : Listener {
         if(event.damager.type == EntityType.PIGLIN_BRUTE && event.entity is Player) {
             val player = event.entity as Player
             val piglin = event.damager as LivingEntity
-            val server = player.server
 
             piglin.equipment?.setItemInMainHand(ItemStack(Material.NETHERITE_AXE))
+            player.playSound(player.location, Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.2f)
+        }
+    }
+
+    //네더 스켈레톤 억까
+    @EventHandler
+    fun onPlayerDamageByWitherSkeleton(event: EntityDamageByEntityEvent) {
+        if(event.damager.type == EntityType.WITHER_SKELETON && event.entity is Player) {
+            val player = event.entity as Player
+
+            player.world.spawn(player.location.add(0.0,13.00,0.0), TNTPrimed::class.java)
+            player.playSound(player.location, Sound.ENTITY_TNT_PRIMED, 0.7f, 1.5f)
+        }
+    }
+
+    //블레이즈 억까
+    @EventHandler
+    fun onPlayerDamageByBlaze(event: EntityDamageByEntityEvent) {
+        if(event.damager.type == EntityType.BLAZE && event.entity is Player) {
+            val player = event.entity as Player
+
+            player.playSound(player.location, Sound.BLOCK_LAVA_AMBIENT, 0.7f, 1.5f)
+            player.fireTicks = 1200
         }
     }
 
@@ -269,6 +316,7 @@ class Events : Listener {
         if (item.type.isEdible) {
             if (num == 1) {
                 player.addPotionEffect(PotionEffect(PotionEffectType.BLINDNESS, 60, 5, false, false))
+                player.playSound(player.location, Sound.BLOCK_BAMBOO_FALL, 0.7f, 1.3f)
                 player.sendMessage("${ChatColor.RED}배탈이 나서 눈 앞이 깜깜해졌다!")
             }
         }
@@ -306,6 +354,7 @@ class Events : Listener {
 
         if (num == 2) {
             val tnt = bed.world.spawn(bed.location.add(0.0, 10.0, 0.0), TNTPrimed::class.java)
+            player.playSound(player.location, Sound.ENTITY_TNT_PRIMED, 0.7f, 1.5f)
             player.sendMessage("${ChatColor.RED}왠지 불안한 기분이 든다..")
             return
         }
