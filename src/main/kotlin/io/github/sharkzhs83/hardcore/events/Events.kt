@@ -317,6 +317,16 @@ class Events : Listener {
 
     }
 
+    //일리저 억까
+    @EventHandler
+    fun onIShoot(event: EntityShootBowEvent) {
+        if (event.entityType == EntityType.PILLAGER) {
+            val entity = event.entity
+            val arrow = entity.launchProjectile(DragonFireball::class.java, entity.location.direction)
+        }
+
+    }
+
     //맞을때 억까
     @EventHandler
     fun onPlayerDamageByEnemy(event: EntityDamageByEntityEvent) {
