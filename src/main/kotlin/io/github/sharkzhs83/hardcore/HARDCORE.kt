@@ -30,7 +30,6 @@ class HARDCORE : JavaPlugin() ,Listener{
         defRecipe.setIngredient('E', Material.EMERALD)
         server.addRecipe(defRecipe)
 
-        this.saveDefaultConfig()
     }
 
 

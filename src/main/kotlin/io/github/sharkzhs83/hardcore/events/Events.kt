@@ -1,5 +1,7 @@
 package io.github.sharkzhs83.hardcore.events
 
+import com.destroystokyo.paper.event.player.PlayerElytraBoostEvent
+import com.destroystokyo.paper.event.player.PlayerTeleportEndGatewayEvent
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
 import org.bukkit.Bukkit
@@ -23,13 +25,140 @@ import org.bukkit.potion.PotionEffectType
 
 class Events : Listener {
 
+
+    //활 발사체
+    @EventHandler
+    fun onPlayerShootBow(event: EntityShootBowEvent) {
+        val range = 1.. 15
+        val num = range.random()
+        if(event.entity.type == EntityType.PLAYER) {
+
+            val player =event.entity as Player
+            when (num) {
+                1,2,3,4 -> {
+                    player.sendMessage("${ChatColor.BOLD}화염구를 추가로 발사합니다!")
+                    player.launchProjectile(Fireball::class.java, player.location.direction)
+                    player.playSound(player.location, Sound.BLOCK_FIRE_AMBIENT, 1.0f, 1.5f)}
+
+                5,6,7 -> {
+                    player.sendMessage("${ChatColor.BOLD}화염구 2개를 추가로 발사합니다!")
+                    player.launchProjectile(Fireball::class.java, player.location.direction)
+                    player.launchProjectile(Fireball::class.java, player.location.direction)
+                    player.playSound(player.location, Sound.BLOCK_FIRE_AMBIENT, 2.0f, 1.5f)}
+
+                8,9-> {
+                    player.launchProjectile(DragonFireball::class.java, player.location.direction)
+                    player.sendMessage("${ChatColor.BOLD}드래곤 화염구를 추가로 발사합니다!")
+                    player.playSound(player.location, Sound.ENTITY_ENDER_DRAGON_AMBIENT, 0.5f, 2.0f)}
+
+                10-> {
+                    player.launchProjectile(SmallFireball::class.java,player.location.direction)
+                    player.launchProjectile(DragonFireball::class.java,player.location.direction)
+                    player.sendMessage("${ChatColor.BOLD}화염구와 드래곤 화염구를 추가로 발사합니다!")
+                    player.playSound(player.location, Sound.ENTITY_BLAZE_SHOOT, 0.7f, 2.0f)}
+            }
+        }
+    }
+
+
+    //겉날개 폭죽억까
+    @EventHandler
+    fun onPlayerBoost(event: PlayerElytraBoostEvent) {
+        val player = event.player
+        val range = 1..5
+        val num = range.random()
+
+        if (num == 1) {
+            player.sendMessage("${ChatColor.RED}폭죽이 터졌습니다!")
+            player.playSound(player.location, Sound.ENTITY_DRAGON_FIREBALL_EXPLODE, 1.5f, 1.2f)
+            player.inventory.itemInMainHand.amount -= 1
+            player.damage(2.0)
+            event.isCancelled = true
+        }
+    }
+
+
+    //침대 억까
+    @EventHandler
+    fun onSleep(event: PlayerBedEnterEvent) {
+        val player = event.player
+        val bed = event.bed
+        val range = 1..50
+        val num = range.random()
+
+        val defender = ItemStack(Material.EMERALD)
+        val defMeta = defender.itemMeta
+
+        defMeta.setDisplayName("${net.md_5.bungee.api.ChatColor.AQUA}크리퍼 저항 에메랄드")
+        defender.itemMeta = defMeta
+
+        if (num == 2) {
+
+            if (player.inventory.itemInOffHand == defender) {
+                player.sendMessage("${ChatColor.AQUA}왠지 상쾌한 기분이 든다..")
+                if (player.inventory.itemInOffHand.amount == 1) {
+                    player.inventory.setItemInOffHand(ItemStack(Material.AIR))
+                } else {
+                    player.inventory.itemInOffHand.amount -= 1
+                }
+            }
+            else {
+                val tnt = bed.world.spawn(bed.location.add(0.0, 10.0, 0.0), TNTPrimed::class.java)
+                player.playSound(player.location, Sound.ENTITY_TNT_PRIMED, 0.7f, 1.5f)
+                player.sendMessage("${ChatColor.RED}왠지 불안한 기분이 든다..")
+                return
+            }
+        }
+    }
+
+    //아이템 억까
+    @EventHandler
+    fun onMake(event: CraftItemEvent) {
+        val player = event.whoClicked
+        val range = 1..20
+        val num = range.random()
+
+        if (num == 1) {
+            event.currentItem = ItemStack(Material.AIR)
+            if (player is Player) {
+                for (ingredient in event.inventory.matrix) {
+                    if (ingredient != null && ingredient.type != Material.AIR) {
+                        ingredient.amount = ingredient.amount - 1
+                        player.sendMessage("${ChatColor.RED}제작에 실패하였습니다!")
+                        player.playSound(player.location, Sound.BLOCK_ANVIL_LAND, 0.5f, 1.0f)
+                    }
+                }
+            }
+        }
+    }
+
+
+    //음식억까
+    @EventHandler
+    fun onPlayerEatFood(event: PlayerItemConsumeEvent) {
+        val player = event.player
+        val item = event.item
+
+        val range = 1..5
+        val num = range.random()
+
+        if (item.type.isEdible) {
+            if (num == 1) {
+                player.addPotionEffect(PotionEffect(PotionEffectType.BLINDNESS, 60, 5, false, false))
+                player.playSound(player.location, Sound.BLOCK_BAMBOO_FALL, 0.7f, 1.3f)
+                player.sendMessage("${ChatColor.RED}배탈이 나서 눈 앞이 깜깜해졌다!")
+            }
+        }
+    }
+
+
     //크리퍼 억까
     @EventHandler
     fun onBlockBreak(event: BlockBreakEvent) {
         val player = event.player
         val block = event.block
 
-        val range = 1..500
+        val range = 1..200
         val num = range.random()
 
         val superRange = 1..2
@@ -39,7 +168,7 @@ class Events : Listener {
         val defMeta = defender.itemMeta
 
         defMeta.setDisplayName("${net.md_5.bungee.api.ChatColor.AQUA}크리퍼 저항 에메랄드")
-        defender.itemMeta = defMeta
+        defender.itemMeta = defMeta  
 
 
 
@@ -107,6 +236,9 @@ class Events : Listener {
             event.drops.add(item)
 
         }
+        else if(event.entity.type == EntityType.PIGLIN || event.entity.type == EntityType.PIGLIN_BRUTE) {
+            event.drops.clear()
+        }
         else {
             val defender = ItemStack(Material.EMERALD)
             val defMeta = defender.itemMeta
@@ -114,7 +246,7 @@ class Events : Listener {
             defMeta.setDisplayName("${net.md_5.bungee.api.ChatColor.AQUA}크리퍼 저항 에메랄드")
             defender.itemMeta = defMeta
 
-            val range = 1..50
+            val range = 1..20
             val num = range.random()
             if(num == 1) {
                 event.drops.add(defender)
@@ -164,8 +296,11 @@ class Events : Listener {
         val entity = event.entity
         val entitytype = event.entityType
 
-        if (entitytype == EntityType.CREEPER) {
-            val tnt = entity.world.spawn(entity.location, TNTPrimed::class.java)
+        if (entitytype == EntityType.CREEPER ) {
+            val creeper = entity as Creeper
+            if(creeper.isPowered) {
+                val tnt = entity.world.spawn(entity.location, TNTPrimed::class.java)
+            }
         } else if (entitytype == EntityType.PRIMED_TNT) {
             val creeper = entity.world.spawn(entity.location, Creeper::class.java)
             creeper.isPowered = true
@@ -179,11 +314,13 @@ class Events : Listener {
             val entity = event.entity
             val arrow = entity.launchProjectile(Fireball::class.java, entity.location.direction)
         }
+
     }
 
-    //좀비 억까
+    //맞을때 억까
     @EventHandler
-    fun onPlayerDamageByZombie(event: EntityDamageByEntityEvent) {
+    fun onPlayerDamageByEnemy(event: EntityDamageByEntityEvent) {
+        //좀비
         if (event.damager.type == EntityType.ZOMBIE && event.entity is Player) {
             val player = event.entity as Player
             val mainHandItem = player.inventory.itemInMainHand
@@ -215,12 +352,8 @@ class Events : Listener {
                 zombie.world.dropItem(zombie.location, stolenOffItem)
             }
         }
-    }
-
-    //거미 억까
-    @EventHandler
-    fun onPlayerDamageBySpider(event: EntityDamageByEntityEvent) {
-        if (event.damager.type == EntityType.SPIDER && event.entity is Player) {
+        //거미
+        else if (event.damager.type == EntityType.SPIDER && event.entity is Player) {
             val player = event.entity as Player
             val entity = event.damager as LivingEntity
 
@@ -229,12 +362,8 @@ class Events : Listener {
 
 
         }
-    }
-
-    //엔더맨 억까
-    @EventHandler
-    fun onPlayerDamageByEnderMan(event: EntityDamageByEntityEvent) {
-        if (event.damager.type == EntityType.ENDERMAN && event.entity is Player) {
+        //엔더맨
+        else if (event.damager.type == EntityType.ENDERMAN && event.entity is Player) {
             val player = event.entity as Player
             val entity = event.damager as LivingEntity
 
@@ -242,25 +371,16 @@ class Events : Listener {
             player.playSound(player.location, Sound.ENTITY_ENDERMAN_TELEPORT, 0.7f, 1.0f)
 
         }
-    }
-
-
-    //네더 좀비 돼지
-    @EventHandler
-    fun onPlayerDamageByZombifiedPiglin(event: EntityDamageByEntityEvent) {
-        if(event.damager.type == EntityType.ZOMBIFIED_PIGLIN && event.entity is Player) {
+        //좀비화 피글린
+        else if(event.damager.type == EntityType.ZOMBIFIED_PIGLIN && event.entity is Player) {
             val player = event.entity as Player
             val entity = event.damager as LivingEntity
 
             player.world.spawn(entity.location.add(0.0,2.00,0.0), PigZombie::class.java)
             player.playSound(player.location, Sound.ITEM_GOAT_HORN_SOUND_0, 0.7f, 1.5f)
         }
-    }
-
-    //네더 피글린들
-    @EventHandler
-    fun onPlayerDamageByPiglin(event: EntityDamageByEntityEvent) {
-        if(event.damager.type == EntityType.PIGLIN && event.entity is Player) {
+        //피글린들
+        else if (event.damager.type == EntityType.PIGLIN && event.entity is Player) {
             val player = event.entity as Player
             val piglin = event.damager as LivingEntity
             val server = player.server
@@ -268,34 +388,23 @@ class Events : Listener {
             piglin.equipment?.setItemInMainHand(ItemStack(Material.NETHERITE_SWORD))
             player.playSound(player.location, Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.2f)
         }
-    }
 
-    @EventHandler
-    fun onPlayerDamageByPiglinBrute(event: EntityDamageByEntityEvent) {
-        if(event.damager.type == EntityType.PIGLIN_BRUTE && event.entity is Player) {
+        else if(event.damager.type == EntityType.PIGLIN_BRUTE && event.entity is Player) {
             val player = event.entity as Player
             val piglin = event.damager as LivingEntity
 
             piglin.equipment?.setItemInMainHand(ItemStack(Material.NETHERITE_AXE))
             player.playSound(player.location, Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.2f)
         }
-    }
-
-    //네더 스켈레톤 억까
-    @EventHandler
-    fun onPlayerDamageByWitherSkeleton(event: EntityDamageByEntityEvent) {
-        if(event.damager.type == EntityType.WITHER_SKELETON && event.entity is Player) {
+        //위더 스켈레톤
+        else if(event.damager.type == EntityType.WITHER_SKELETON && event.entity is Player) {
             val player = event.entity as Player
 
             player.world.spawn(player.location.add(0.0,13.00,0.0), TNTPrimed::class.java)
             player.playSound(player.location, Sound.ENTITY_TNT_PRIMED, 0.7f, 1.5f)
         }
-    }
-
-    //블레이즈 억까
-    @EventHandler
-    fun onPlayerDamageByBlaze(event: EntityDamageByEntityEvent) {
-        if(event.damager.type == EntityType.BLAZE && event.entity is Player) {
+        //블레이즈
+        else if(event.damager.type == EntityType.BLAZE && event.entity is Player) {
             val player = event.entity as Player
 
             player.playSound(player.location, Sound.BLOCK_LAVA_AMBIENT, 0.7f, 1.5f)
@@ -303,60 +412,4 @@ class Events : Listener {
         }
     }
 
-
-    //음식억까
-    @EventHandler
-    fun onPlayerEatFood(event: PlayerItemConsumeEvent) {
-        val player = event.player
-        val item = event.item
-
-        val range = 1..5
-        val num = range.random()
-
-        if (item.type.isEdible) {
-            if (num == 1) {
-                player.addPotionEffect(PotionEffect(PotionEffectType.BLINDNESS, 60, 5, false, false))
-                player.playSound(player.location, Sound.BLOCK_BAMBOO_FALL, 0.7f, 1.3f)
-                player.sendMessage("${ChatColor.RED}배탈이 나서 눈 앞이 깜깜해졌다!")
-            }
-        }
-    }
-
-
-    //아이템 억까
-    @EventHandler
-    fun onMake(event: CraftItemEvent) {
-        val player = event.whoClicked
-        val range = 1..20
-        val num = range.random()
-
-        if (num == 1) {
-            event.currentItem = ItemStack(Material.AIR)
-            if (player is Player) {
-                for (ingredient in event.inventory.matrix) {
-                    if (ingredient != null && ingredient.type != Material.AIR) {
-                        ingredient.amount = ingredient.amount - 1
-                        player.sendMessage("${ChatColor.RED}제작에 실패하였습니다!")
-                        player.playSound(player.location, Sound.BLOCK_ANVIL_LAND, 0.5f, 1.0f)
-                    }
-                }
-            }
-        }
-    }
-
-    //침대 억까
-    @EventHandler
-    fun onSleep(event: PlayerBedEnterEvent) {
-        val player = event.player
-        val bed = event.bed
-        val range = 1..50
-        val num = range.random()
-
-        if (num == 2) {
-            val tnt = bed.world.spawn(bed.location.add(0.0, 10.0, 0.0), TNTPrimed::class.java)
-            player.playSound(player.location, Sound.ENTITY_TNT_PRIMED, 0.7f, 1.5f)
-            player.sendMessage("${ChatColor.RED}왠지 불안한 기분이 든다..")
-            return
-        }
-    }
 }
