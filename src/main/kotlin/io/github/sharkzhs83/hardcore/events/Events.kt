@@ -1,13 +1,12 @@
 package io.github.sharkzhs83.hardcore.events
 
 import com.destroystokyo.paper.event.player.PlayerElytraBoostEvent
+import io.github.sharkzhs83.hardcore.HARDCORE
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
-import org.bukkit.Bukkit
-import org.bukkit.ChatColor
-import org.bukkit.Material
-import org.bukkit.Sound
+import org.bukkit.*
 import org.bukkit.attribute.Attribute
+import org.bukkit.enchantments.Enchantment
 import org.bukkit.entity.*
 import org.bukkit.entity.EntityType.*
 import org.bukkit.event.EventHandler
@@ -22,6 +21,7 @@ import org.bukkit.event.entity.EntityShootBowEvent
 import org.bukkit.event.inventory.CraftItemEvent
 import org.bukkit.event.player.PlayerBedEnterEvent
 import org.bukkit.event.player.PlayerItemConsumeEvent
+import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
@@ -37,15 +37,16 @@ class Events : Listener {
 
         if(entity.type == EntityType.ZOMBIE) {
             entity.getAttribute(Attribute.GENERIC_MAX_HEALTH)!!.baseValue = maxHealth * 2.0
-            entity.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)!!.baseValue *= 1.5
+            entity.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)!!.baseValue *= 2.0
             entity.getAttribute(Attribute.ZOMBIE_SPAWN_REINFORCEMENTS)!!.baseValue *= 2.0
             entity.health = maxHealth * 2.0
         }
         else if(entity.type == EntityType.SKELETON) {
-            entity.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)!!.baseValue *= 3.0
+            entity.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)!!.baseValue *= 1.7
         }
         else if(entity.type == EntityType.CREEPER) {
             entity.getAttribute(Attribute.GENERIC_MAX_HEALTH)!!.baseValue = maxHealth * 1.5
+            entity.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)!!.baseValue *= 1.7
             entity.health = maxHealth * 1.5
         }
         else if(entity.type == EntityType.SPIDER) {
@@ -82,7 +83,6 @@ class Events : Listener {
         }
     }
 
-
     //인첸트 억까
     @EventHandler
     fun onEnchantItem(event: EnchantItemEvent) {
@@ -117,7 +117,6 @@ class Events : Listener {
             event.isCancelled = true
         }
     }
-
 
     //침대 억까
     @EventHandler
@@ -173,7 +172,6 @@ class Events : Listener {
         }
     }
 
-
     //음식억까
     @EventHandler
     fun onPlayerEatFood(event: PlayerItemConsumeEvent) {
@@ -192,14 +190,13 @@ class Events : Listener {
         }
     }
 
-
     //크리퍼 억까
     @EventHandler
     fun onBlockBreak(event: BlockBreakEvent) {
         val player = event.player
         val block = event.block
 
-        val range = 1..125
+        val range = 1..300
         val num = range.random()
 
         val superRange = 1..2
@@ -208,39 +205,21 @@ class Events : Listener {
         val defender = ItemStack(Material.EMERALD)
         val defMeta = defender.itemMeta
 
-        defMeta.setDisplayName("${net.md_5.bungee.api.ChatColor.AQUA}크리퍼 저항 에메랄드")
+        defMeta.setDisplayName("${ChatColor.AQUA}크리퍼 저항 에메랄드")
+        defMeta.isUnbreakable = true
         defender.itemMeta = defMeta  
 
 
 
         if (num == 1 || num == 2 || num == 3) {
             if (superNum == 1) {
-                if (player.inventory.itemInOffHand == defender) {
-                    player.sendMessage("${ChatColor.AQUA}크리퍼 출현을 방어했습니다!")
-                    if(player.inventory.itemInOffHand.amount == 1) {
-                        player.inventory.setItemInOffHand(ItemStack(Material.AIR))
-                    }
-                    else {
-                        player.inventory.itemInOffHand.amount -= 1
-                    }
-                } else {
-                    val creeper1 = player.world.spawn(block.location, Creeper::class.java)
-                    val creeper2 = player.world.spawn(block.location, Creeper::class.java)
-                    creeper1.isPowered = true
-                    creeper2.isPowered = true
-                    player.sendMessage("${ChatColor.GREEN}크리퍼들이 나타났습니다!")
-                }
-
+                player.sendMessage("${ChatColor.GREEN}크리퍼들이 나타났습니다!")
+                val creeper1 = player.world.spawn(block.location, Creeper::class.java)
+                creeper1.isPowered = true
+                val creeper2= player.world.spawn(block.location, Creeper::class.java)
+                creeper2.isPowered = true
             }
-            if (player.inventory.itemInOffHand == defender) {
-                player.sendMessage("${ChatColor.AQUA}크리퍼 출현을 방어했습니다!")
-                if(player.inventory.itemInOffHand.amount == 1) {
-                    player.inventory.setItemInOffHand(ItemStack(Material.AIR))
-                }
-                else {
-                    player.inventory.itemInOffHand.amount -= 1
-                }
-            } else {
+            else {
                 val creeper = player.world.spawn(block.location, Creeper::class.java)
                 creeper.isPowered = true
                 player.sendMessage("${ChatColor.GREEN}크리퍼가 나타났습니다!")
@@ -248,7 +227,7 @@ class Events : Listener {
         }
     }
 
-    //defender 드랍 & 보스
+    //보스
     @EventHandler
     fun onEntityDead(event: EntityDeathEvent) {
         if(event.entity.type == ENDER_DRAGON) {
@@ -291,19 +270,6 @@ class Events : Listener {
         }
         else if(event.entity.type == PIGLIN || event.entity.type == PIGLIN_BRUTE) {
             event.drops.clear()
-        }
-        else {
-            val defender = ItemStack(Material.EMERALD)
-            val defMeta = defender.itemMeta
-
-            defMeta.setDisplayName("${net.md_5.bungee.api.ChatColor.AQUA}크리퍼 저항 에메랄드")
-            defender.itemMeta = defMeta
-
-            val range = 1..20
-            val num = range.random()
-            if(num == 1) {
-                event.drops.add(defender)
-            }
         }
     }
 
@@ -372,7 +338,7 @@ class Events : Listener {
 
     //일리저 억까
     @EventHandler
-    fun onIShoot(event: EntityShootBowEvent) {
+    fun onPILLAGERShoot(event: EntityShootBowEvent) {
         if (event.entityType == PILLAGER) {
             val entity = event.entity
             val arrow = entity.launchProjectile(DragonFireball::class.java, entity.location.direction)
@@ -470,7 +436,13 @@ class Events : Listener {
         else if(event.damager.type == BLAZE && event.entity is Player) {
             val player = event.entity as Player
 
-            player.playSound(player.location, Sound.BLOCK_LAVA_AMBIENT, 0.7f, 1.5f)
+            player.playSound(player.location, Sound.BLOCK_LAVA_AMBIENT, 2.0f, 1.5f)
+            player.fireTicks = 1200
+        }
+        else if(event.damager.type == SMALL_FIREBALL) {
+            val player = event.entity as Player
+
+            player.playSound(player.location, Sound.BLOCK_LAVA_AMBIENT, 2.0f, 1.5f)
             player.fireTicks = 1200
         }
     }

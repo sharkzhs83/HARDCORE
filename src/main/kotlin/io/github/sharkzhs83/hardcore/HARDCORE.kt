@@ -3,6 +3,7 @@ package io.github.sharkzhs83.hardcore
 
 import io.github.sharkzhs83.hardcore.events.Events
 import net.md_5.bungee.api.ChatColor
+import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.event.Listener
@@ -70,6 +71,8 @@ class HARDCORE : JavaPlugin() ,Listener{
         BRecipe.setIngredient('W', wardenItem)
         BRecipe.setIngredient('E', elderItem)
         server.addRecipe(BRecipe)
+
+
 
     }
 
